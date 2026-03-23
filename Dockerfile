@@ -3,18 +3,17 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+# app/ ディレクトリの内容をコピー
+COPY app/package.json app/package-lock.json* ./
 RUN npm ci
 
-COPY . .
+COPY app/ .
 
+# Next.js ビルド（standalone出力）
 RUN npx next build
 
 # スクリプト用TypeScriptをコンパイル
-RUN npx tsc -p tsconfig.scripts.json || true
-
-# standalone モードの server.js を利用するため、必要ファイルを整理
-# Next.js の output: 'standalone' が設定されている前提
+RUN npx tsc -p tsconfig.scripts.json
 
 # ---- runner ----
 FROM node:20-alpine AS runner
@@ -35,6 +34,9 @@ COPY --from=builder /app/public ./public
 
 # コンパイル済みスケジューラスクリプトをコピー
 COPY --from=builder /app/scripts-dist ./scripts
+
+# rss-parser等のnpmパッケージが必要なのでnode_modulesもコピー
+COPY --from=builder /app/node_modules ./node_modules
 
 # entrypoint をコピー
 COPY entrypoint.sh ./entrypoint.sh

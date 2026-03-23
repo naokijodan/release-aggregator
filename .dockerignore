@@ -1,5 +1,5 @@
-node_modules
-.next
+app/node_modules
+app/.next
 .git
 .gitignore
 *.md
@@ -7,7 +7,6 @@ node_modules
 .env.*
 .vscode
 .idea
-docker-compose*.yml
 Dockerfile
 .dockerignore
 data
