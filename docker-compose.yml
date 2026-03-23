@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # RSSHub - RSSフィード生成エンジン
+  rsshub:
+    image: diygod/rsshub:latest
+    container_name: release-rsshub
+    restart: unless-stopped
+    ports:
+      - "1200:1200"
+    environment:
+      - NODE_ENV=production
+      - CACHE_TYPE=memory
+      - CACHE_EXPIRE=600
+      - CACHE_CONTENT_EXPIRE=3600
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1200/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # changedetection.io - Webサイト変更監視
+  changedetection:
+    image: ghcr.io/dgtlmoon/changedetection.io
+    container_name: release-changedetection
+    restart: unless-stopped
+    ports:
+      - "5050:5000"
+    volumes:
+      - changedetection-data:/datastore
+    environment:
+      - PUID=1000
+      - PGID=1000
+
+  # フロントエンド + データ収集
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: release-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - app-data:/app/data
+    environment:
+      - RSSHUB_URL=http://rsshub:1200
+      - CHANGEDETECTION_URL=http://changedetection:5000
+    depends_on:
+      - rsshub
+      - changedetection
+
+volumes:
+  changedetection-data:
+  app-data:
