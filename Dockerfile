@@ -25,7 +25,8 @@ ENV RSSHUB_URL=http://rsshub:1200
 ENV CHANGEDETECTION_URL=http://changedetection:5000
 
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 nextjs && \
+    apk add --no-cache su-exec
 
 # Next.js standalone output をコピー
 COPY --from=builder /app/.next/standalone ./
@@ -48,7 +49,5 @@ RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 VOLUME ["/app/data"]
 
 EXPOSE 3000
-
-USER nextjs
 
 ENTRYPOINT ["./entrypoint.sh"]
